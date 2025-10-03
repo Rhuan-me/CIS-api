@@ -1,0 +1,6 @@
+@CisApi.API_HostAddress = http://localhost:5194
+
+GET {{CisApi.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
