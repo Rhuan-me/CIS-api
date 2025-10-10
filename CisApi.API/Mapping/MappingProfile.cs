@@ -8,9 +8,12 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        // Mapeia da entidade Topic para o TopicDto
+        // Mapeamentos de Topic
         CreateMap<Topic, TopicDto>();
-        // Mapeia do CreateTopicDto para a entidade Topic
         CreateMap<CreateTopicDto, Topic>();
+
+        // NOVOS MAPEAMENTOS DE IDEA
+        CreateMap<Idea, IdeaDto>();
+        CreateMap<CreateIdeaDto, Idea>();
     }
 }
