@@ -1,18 +1,18 @@
-﻿using System.Security.Claims;
-using AutoMapper;
+﻿using AutoMapper;
+using CisApi.API.DTOs;
 using CisApi.Core.Entities;
+using CisApi.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CisApi.API.Controllers;
 
-// Crie este novo controller na pasta Controllers
 [Authorize]
 [ApiController]
 [Route("api/ideas")]
 public class IdeaController : ControllerBase
 {
-    // Crie IIdeaRepository e IdeaRepository assim como fez para Tópicos
     private readonly IIdeaRepository _ideaRepository;
     private readonly ITopicRepository _topicRepository;
     private readonly IMapper _mapper;
@@ -24,27 +24,59 @@ public class IdeaController : ControllerBase
         _mapper = mapper;
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetIdea(int id)
+    {
+        var idea = await _ideaRepository.GetByIdAsync(id);
+        if (idea == null) return NotFound();
+        return Ok(_mapper.Map<IdeaDto>(idea));
+    }
+    
+    [HttpGet("topic/{topicId}")]
+    public async Task<IActionResult> GetIdeasByTopic(int topicId)
+    {
+        var ideas = await _ideaRepository.GetByTopicIdAsync(topicId);
+        return Ok(_mapper.Map<IEnumerable<IdeaDto>>(ideas));
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateIdea([FromBody] CreateIdeaDto createIdeaDto)
     {
-        var topic = await _topicRepository.GetByIdAsync(createIdeaDto.TopicId);
-        if (topic == null)
-        {
-            return BadRequest("Tópico não encontrado.");
-        }
-        
+        if (await _topicRepository.GetByIdAsync(createIdeaDto.TopicId) == null)
+            return BadRequest("O Tópico especificado não existe.");
+
         var idea = _mapper.Map<Idea>(createIdeaDto);
-        var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
-        idea.OwnedBy = userEmail;
+        idea.OwnedBy = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         idea.CreatedAt = DateTime.UtcNow;
         idea.UpdatedAt = DateTime.UtcNow;
 
         var createdIdea = await _ideaRepository.AddAsync(idea);
-        var ideaDto = _mapper.Map<IdeaDto>(createdIdea);
-
-        return Ok(ideaDto);
+        return CreatedAtAction(nameof(GetIdea), new { id = createdIdea.Id }, _mapper.Map<IdeaDto>(createdIdea));
     }
-    
-    // Adicione os outros endpoints: Get, Update, Delete
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateIdea(int id, [FromBody] CreateIdeaDto updateIdeaDto)
+    {
+        var idea = await _ideaRepository.GetByIdAsync(id);
+        if (idea == null) return NotFound();
+
+        if (idea.OwnedBy != User.FindFirstValue(ClaimTypes.NameIdentifier)) return Forbid();
+
+        _mapper.Map(updateIdeaDto, idea);
+        idea.UpdatedAt = DateTime.UtcNow;
+        await _ideaRepository.UpdateAsync(idea);
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteIdea(int id)
+    {
+        var idea = await _ideaRepository.GetByIdAsync(id);
+        if (idea == null) return NotFound();
+
+        if (idea.OwnedBy != User.FindFirstValue(ClaimTypes.NameIdentifier)) return Forbid();
+
+        await _ideaRepository.DeleteAsync(id);
+        return NoContent();
+    }
 }

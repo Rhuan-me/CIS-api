@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CisApi.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+97105cc60fea9f9b3d8fd7911f5efda19c9c6dd3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0a5c86eab8c065a8ed211b8bf959a6410bc0c63a")]
 [assembly: System.Reflection.AssemblyProductAttribute("CisApi.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CisApi.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

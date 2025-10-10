@@ -12,7 +12,7 @@ public class MappingProfile : Profile
         CreateMap<Topic, TopicDto>();
         CreateMap<CreateTopicDto, Topic>();
 
-        // NOVOS MAPEAMENTOS DE IDEA
+        // Adicionar mapeamentos de Idea
         CreateMap<Idea, IdeaDto>();
         CreateMap<CreateIdeaDto, Idea>();
     }

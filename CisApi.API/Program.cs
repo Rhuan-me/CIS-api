@@ -5,33 +5,31 @@ using CisApi.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; // Adicione este using
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
-// Adicionar serviços ao contêiner.
 builder.Services.AddControllers();
 
-// Configurar o DbContext para o MySQL
 var connectionString = configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<CisDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Configurar Injeção de Dependência
+// Registrar TODOS os repositórios
 builder.Services.AddScoped<ITopicRepository, TopicRepository>();
+builder.Services.AddScoped<IIdeaRepository, IdeaRepository>();
+builder.Services.AddScoped<IVoteRepository, VoteRepository>();
 
-// Configurar AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Configurar autenticação JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         var jwtSecret = configuration["Jwt:Secret"];
         if (string.IsNullOrEmpty(jwtSecret))
         {
-            throw new InvalidOperationException("JWT Secret not configured in appsettings.json");
+            throw new InvalidOperationException("JWT Secret não está configurado no appsettings.json");
         }
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -39,18 +37,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
             ValidateIssuer = false,
             ValidateAudience = false,
-            ValidateLifetime = true
+            ValidateLifetime = true,
+            // ADIÇÃO CRÍTICA: Valida se o algoritmo do token é HS512
+            ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha512 }
         };
     });
 
-// Adicionar serviços de autorização
 builder.Services.AddAuthorization();
 
-// CORREÇÃO: Adicionar serviços do Swagger (Swashbuckle)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    // Adiciona o cadeado de "Authorize" na interface do Swagger
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "CIS API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -65,39 +63,27 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 });
 
-
 var app = builder.Build();
 
-// Configurar o pipeline de requisições HTTP.
 if (app.Environment.IsDevelopment())
 {
-    // CORREÇÃO: Usar os métodos do Swashbuckle
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "CIS API V1");
-        c.RoutePrefix = string.Empty; // Define o Swagger como a página inicial
+        c.RoutePrefix = string.Empty; 
     });
 }
 
 app.UseHttpsRedirection();
-
-// Habilitar autenticação e autorização
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Mapear os controllers
 app.MapControllers();
-
 app.Run();
