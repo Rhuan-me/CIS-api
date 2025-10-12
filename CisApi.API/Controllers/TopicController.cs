@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace CisApi.API.Controllers;
 
-
+[Authorize]
 [ApiController]
 [Route("api/topics")]
 public class TopicsController : ControllerBase

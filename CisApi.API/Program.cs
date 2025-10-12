@@ -13,6 +13,7 @@ var configuration = builder.Configuration;
 // --- Início da Configuração ---
 
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 
 var connectionString = configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<CisDbContext>(options =>
@@ -73,6 +74,13 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// Aplica as migrations do Entity Framework Core na inicialização
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<CisApi.Infrastructure.Data.CisDbContext>();
+    dbContext.Database.Migrate();
+}
 
 // --- Início do Pipeline ---
 
