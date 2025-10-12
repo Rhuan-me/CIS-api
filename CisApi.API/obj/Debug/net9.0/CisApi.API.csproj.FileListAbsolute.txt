@@ -63,3 +63,4 @@ C:\Users\rhuan\Jala\DS3\CIS api\CisApi.API\obj\Debug\net9.0\ref\CisApi.API.dll
 C:\Users\rhuan\Jala\DS3\CIS api\CisApi.API\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
 C:\Users\rhuan\Jala\DS3\CIS api\CisApi.API\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\rhuan\Jala\DS3\CIS api\CisApi.API\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\rhuan\Jala\DS3\CIS api\CisApi.API\bin\Debug\net9.0\Microsoft.Extensions.Configuration.Abstractions.dll

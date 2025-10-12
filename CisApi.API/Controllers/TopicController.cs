@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace CisApi.API.Controllers;
 
-[Authorize]
+
 [ApiController]
 [Route("api/topics")]
 public class TopicsController : ControllerBase
@@ -41,10 +41,11 @@ public class TopicsController : ControllerBase
     public async Task<IActionResult> CreateTopic([FromBody] CreateTopicDto createTopicDto)
     {
         var topic = _mapper.Map<Topic>(createTopicDto);
+        /*
         var userEmail = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userEmail)) return Unauthorized();
 
-        topic.OwnedBy = userEmail;
+        topic.OwnedBy = userEmail;*/
         topic.CreatedAt = DateTime.UtcNow;
         topic.UpdatedAt = DateTime.UtcNow;
 

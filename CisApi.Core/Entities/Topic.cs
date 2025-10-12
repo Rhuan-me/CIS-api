@@ -1,4 +1,8 @@
 ﻿// CisApi.Core/Entities/Topic.cs
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace CisApi.Core.Entities;
 
 /// <summary>
@@ -6,6 +10,8 @@ namespace CisApi.Core.Entities;
 /// </summary>
 public class Topic
 {
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; } // Chave primária
     public string Title { get; set; } = string.Empty; // Título (obrigatório)
     public string? Description { get; set; } // Descrição (opcional)

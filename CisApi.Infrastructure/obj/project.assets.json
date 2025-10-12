@@ -2837,6 +2837,7 @@
     "net9.0": [
       "CisApi.Core >= 1.0.0",
       "Microsoft.EntityFrameworkCore >= 9.0.9",
+      "Microsoft.EntityFrameworkCore.Relational >= 9.0.9",
       "Microsoft.EntityFrameworkCore.Tools >= 9.0.9",
       "Pomelo.EntityFrameworkCore.MySql >= 9.0.0"
     ]
@@ -2890,6 +2891,10 @@
         "targetAlias": "net9.0",
         "dependencies": {
           "Microsoft.EntityFrameworkCore": {
+            "target": "Package",
+            "version": "[9.0.9, )"
+          },
+          "Microsoft.EntityFrameworkCore.Relational": {
             "target": "Package",
             "version": "[9.0.9, )"
           },

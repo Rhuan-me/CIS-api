@@ -10,27 +10,30 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
+// --- Início da Configuração ---
+
 builder.Services.AddControllers();
 
 var connectionString = configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<CisDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Registrar TODOS os repositórios
 builder.Services.AddScoped<ITopicRepository, TopicRepository>();
 builder.Services.AddScoped<IIdeaRepository, IdeaRepository>();
 builder.Services.AddScoped<IVoteRepository, VoteRepository>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+// --- CORREÇÃO DEFINITIVA DA AUTENTICAÇÃO JWT ---
+var jwtSecret = configuration["Jwt:Secret"];
+if (string.IsNullOrEmpty(jwtSecret))
+{
+    throw new InvalidOperationException("ERRO CRÍTICO: O segredo JWT (Jwt:Secret) não foi encontrado ou está vazio no appsettings.json");
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var jwtSecret = configuration["Jwt:Secret"];
-        if (string.IsNullOrEmpty(jwtSecret))
-        {
-            throw new InvalidOperationException("JWT Secret não está configurado no appsettings.json");
-        }
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
@@ -38,8 +41,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
-            // ADIÇÃO CRÍTICA: Valida se o algoritmo do token é HS512
-            ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha512 }
+            ClockSkew = TimeSpan.Zero // Remove a tolerância de tempo para depuração
         };
     });
 
@@ -72,17 +74,19 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// --- Início do Pipeline ---
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "CIS API V1");
-        c.RoutePrefix = string.Empty; 
+        c.RoutePrefix = string.Empty;
     });
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
