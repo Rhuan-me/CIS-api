@@ -1,7 +1,4 @@
-﻿// CisApi.Core/Entities/Topic.cs
-
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using MongoDB.Bson.Serialization.Attributes;
 
 namespace CisApi.Core.Entities;
 
@@ -10,17 +7,14 @@ namespace CisApi.Core.Entities;
 /// </summary>
 public class Topic
 {
-    [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; } // Chave primária
-    public string Title { get; set; } = string.Empty; // Título (obrigatório)
-    public string? Description { get; set; } // Descrição (opcional)
-    public string OwnedBy { get; set; } = string.Empty; // Email do proprietário (obrigatório, indexado)
-    public DateTime CreatedAt { get; set; } // Timestamp de criação
-    public DateTime UpdatedAt { get; set; } // Timestamp de atualização
+    [BsonId] // Mapeia esta propriedade para o campo _id do MongoDB
+    public int Id { get; set; }
     
-    /// <summary>
-    /// Propriedade de navegação: um tópico pode ter muitas ideias.
-    /// </summary>
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string OwnedBy { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    
     public virtual ICollection<Idea> Ideas { get; set; } = new List<Idea>();
 }

@@ -29,9 +29,7 @@ namespace CisApi.API.Controllers
         {
             var client = _httpClientFactory.CreateClient();
             var javaApiUrl = _configuration["JavaApi:Url"];
-
-            // --- INÍCIO DA ALTERAÇÃO ---
-            // Configura o serializador para usar camelCase
+            
             var serializerOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -40,13 +38,11 @@ namespace CisApi.API.Controllers
                 JsonSerializer.Serialize(loginDto, serializerOptions),
                 Encoding.UTF8,
                 "application/json");
-            // --- FIM DA ALTERAÇÃO ---
 
             var response = await client.PostAsync($"{javaApiUrl}/api/users/login", jsonContent);
 
             if (response.IsSuccessStatusCode)
             {
-                // ... (resto do método sem alterações)
                 var token = GenerateJwtToken(loginDto.Login);
                 return Ok(new { Token = token });
             }

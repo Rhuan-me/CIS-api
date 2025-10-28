@@ -1,11 +1,10 @@
 using System.Text;
 using CisApi.Core.Interfaces;
-using CisApi.Infrastructure.Data;
-using CisApi.Infrastructure.Repositories;
+using CisApi.Infrastructure.Repositories; // Aponta para os novos repositórios Mongo
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MongoDB.Driver; // Adicionado para o MongoDB
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -13,19 +12,47 @@ var configuration = builder.Configuration;
 // --- Início da Configuração ---
 
 builder.Services.AddControllers();
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient(); // Mantido para a API de login Java
 
-var connectionString = configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<CisDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+// --- Início da Configuração do MongoDB ---
 
-builder.Services.AddScoped<ITopicRepository, TopicRepository>();
-builder.Services.AddScoped<IIdeaRepository, IdeaRepository>();
-builder.Services.AddScoped<IVoteRepository, VoteRepository>();
+// 1. Registar o Cliente MongoDB como Singleton
+builder.Services.AddSingleton<IMongoClient>(sp =>
+{
+    var connectionString = configuration["MongoDbSettings:ConnectionString"];
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        throw new InvalidOperationException("ERRO CRÍTICO: 'MongoDbSettings:ConnectionString' não foi encontrada no appsettings.json.");
+    }
+    return new MongoClient(connectionString);
+});
+
+// 2. Registar o IMongoDatabase (injeta a base de dados específica)
+builder.Services.AddScoped<IMongoDatabase>(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    var dbName = configuration["MongoDbSettings:DatabaseName"];
+    if (string.IsNullOrEmpty(dbName))
+    {
+        throw new InvalidOperationException("ERRO CRÍTICO: 'MongoDbSettings:DatabaseName' não foi encontrada no appsettings.json.");
+    }
+    return client.GetDatabase(dbName);
+});
+
+// 3. Apagar a configuração antiga do DbContext
+// var connectionString = configuration.GetConnectionString("DefaultConnection"); // REMOVIDO
+// builder.Services.AddDbContext<CisDbContext>(...); // REMOVIDO
+
+// 4. Registar os novos repositórios do MongoDB
+builder.Services.AddScoped<ITopicRepository, MongoTopicRepository>();
+builder.Services.AddScoped<IIdeaRepository, MongoIdeaRepository>();
+builder.Services.AddScoped<IVoteRepository, MongoVoteRepository>();
+
+// --- Fim da Configuração do MongoDB ---
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// --- CORREÇÃO DEFINITIVA DA AUTENTICAÇÃO JWT ---
+// --- Configuração JWT (Mantida) ---
 var jwtSecret = configuration["Jwt:Secret"];
 if (string.IsNullOrEmpty(jwtSecret))
 {
@@ -42,12 +69,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero // Remove a tolerância de tempo para depuração
+            ClockSkew = TimeSpan.Zero
         };
     });
 
 builder.Services.AddAuthorization();
 
+// --- Configuração do Swagger (Mantida) ---
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -64,7 +92,7 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme
+            new OpenApiScheme
             {
                 Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
@@ -75,14 +103,15 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Aplica as migrations do Entity Framework Core na inicialização
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<CisApi.Infrastructure.Data.CisDbContext>();
-    dbContext.Database.Migrate();
-}
+// --- Bloco de Migração do EF Core (REMOVIDO) ---
+// O MongoDB é schemaless e não precisa deste bloco de migração.
+// using (var scope = app.Services.CreateScope())
+// {
+//     var dbContext = ...
+//     dbContext.Database.Migrate();
+// }
 
-// --- Início do Pipeline ---
+// --- Início do Pipeline HTTP ---
 
 if (app.Environment.IsDevelopment())
 {
@@ -94,7 +123,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-//app.UseHttpsRedirection();
+//app.UseHttpsRedirection(); // Mantido comentado como no seu original
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -70,9 +70,9 @@
               "target": "Package",
               "version": "[9.0.9, )"
             },
-            "Pomelo.EntityFrameworkCore.MySql": {
+            "MongoDB.Driver": {
               "target": "Package",
-              "version": "[9.0.0, )"
+              "version": "[3.5.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
@@ -142,6 +142,12 @@
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
+          "dependencies": {
+            "MongoDB.Bson": {
+              "target": "Package",
+              "version": "[3.5.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

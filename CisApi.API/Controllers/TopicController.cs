@@ -5,6 +5,7 @@ using CisApi.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CisApi.API.Validators;
 
 namespace CisApi.API.Controllers;
 

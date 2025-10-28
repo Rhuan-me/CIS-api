@@ -1,4 +1,5 @@
-﻿// CisApi.Core/Entities/Vote.cs
+﻿using MongoDB.Bson.Serialization.Attributes;
+
 namespace CisApi.Core.Entities;
 
 /// <summary>
@@ -6,13 +7,11 @@ namespace CisApi.Core.Entities;
 /// </summary>
 public class Vote
 {
-    public int Id { get; set; } // Chave primária
-    public int IdeaId { get; set; } // Chave estrangeira para Idea
-    public string VotedBy { get; set; } = string.Empty; // Email do usuário que votou (obrigatório, indexado)
-    public DateTime VotedAt { get; set; } // Timestamp do voto
+    [BsonId]
+    public int Id { get; set; }
     
-    /// <summary>
-    /// Propriedade de navegação para a ideia associada.
-    /// </summary>
-    public virtual Idea Idea { get; set; } = null!;
+    public int IdeaId { get; set; } 
+    
+    public string VotedBy { get; set; } = string.Empty;
+    public DateTime VotedAt { get; set; }
 }

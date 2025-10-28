@@ -3,16 +3,16 @@ using FluentValidation;
 
 namespace CisApi.API.Validators;
 
-public class CreateTopicDtoValidator : AbstractValidator<CreateTopicDto>
+public class CreateTopicValidator : AbstractValidator<CreateTopicDto>
 {
-    public CreateTopicDtoValidator()
+    public CreateTopicValidator()
     {
-        // Regra de validação baseada nos critérios de aceitação da User Story
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("O título é obrigatório.")
-            .MaximumLength(255).WithMessage("O título não pode exceder 255 caracteres.");
+            .MinimumLength(5).WithMessage("O título deve ter pelo menos 5 caracteres.")
+            .MaximumLength(150).WithMessage("O título não pode exceder 150 caracteres.");
 
         RuleFor(x => x.Description)
-            .MaximumLength(1000).WithMessage("A descrição não pode exceder 1000 caracteres.");
+            .MaximumLength(500).WithMessage("A descrição não pode exceder 500 caracteres.");
     }
 }
