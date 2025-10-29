@@ -1,6 +1,7 @@
 ﻿using CisApi.Core.Entities;
 using CisApi.Core.Interfaces;
 using MongoDB.Driver;
+using MongoDB.Bson; // <--- ADICIONE ESTE USING
 
 namespace CisApi.Infrastructure.Repositories;
 
@@ -25,6 +26,25 @@ public class MongoTopicRepository : ITopicRepository
 
     public async Task AddAsync(Topic topic)
     {
+        // Lógica CORRIGIDA para Aggregation
+        var maxIdResult = await _topics.Aggregate()
+            // Ordena pelos BSON Documents, não por LINQ
+            .Sort(Builders<Topic>.Sort.Descending(t => t.Id)) 
+            .Limit(1)
+            // Projeta usando BSON Document syntax
+            .Project(new BsonDocument { { "_id", 0 }, { "Id", "$_id" } }) 
+            .FirstOrDefaultAsync(); // Retorna um BsonDocument
+
+        // Se maxIdResult não for nulo e contiver o campo "Id"
+        if (maxIdResult != null && maxIdResult.Contains("Id"))
+        {
+            topic.Id = maxIdResult["Id"].AsInt32 + 1;
+        }
+        else
+        {
+            topic.Id = 1; // Se a coleção estiver vazia
+        }
+    
         await _topics.InsertOneAsync(topic);
     }
 

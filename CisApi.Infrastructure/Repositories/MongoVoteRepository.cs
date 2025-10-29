@@ -13,58 +13,60 @@ public class MongoVoteRepository : IVoteRepository
         _topics = database.GetCollection<Topic>("topics");
     }
 
-    public async Task<Vote?> GetByIdAsync(int id)
+    // --- SEU MÉTODO (CORRETO) ---
+    public async Task<bool> HasVotedAsync(int ideaId, string userEmail)
     {
-        // Esta é uma operação muito ineficiente em MongoDB e deve ser evitada
-        // se possível. Estamos a procurar em todos os tópicos e todas as ideias.
         var filter = Builders<Topic>.Filter.ElemMatch(
-            t => t.Ideas, 
-            i => i.Votes.Any(v => v.Id == id)
+            t => t.Ideas,
+            i => i.Id == ideaId && i.Votes.Any(v => v.VotedBy == userEmail)
         );
         var topic = await _topics.Find(filter).FirstOrDefaultAsync();
-        
-        // Encontra e retorna o voto
-        return topic?.Ideas
-            .SelectMany(i => i.Votes)
-            .FirstOrDefault(v => v.Id == id);
+        return topic != null;
     }
 
-    public async Task AddAsync(Vote vote)
+    // --- SEU MÉTODO (CORRETO) ---
+    // Este método já estava correto no seu snippet,
+    // corrigindo o typo "ideas" para "Ideas".
+    public async Task AddAsync(Vote vote, int ideaId)
     {
-        // Para adicionar um Voto, temos de o "empurrar" para o array 'Votes'
-        // da Ideia específica, dentro do Tópico específico.
-        
-        // 1. Encontrar o Tópico que contém a Ideia
-        var ideaFilter = Builders<Topic>.Filter.ElemMatch(t => t.Ideas, i => i.Id == vote.IdeaId);
-        
-        // 2. Definir a atualização para adicionar o voto ao array "votes" da ideia
-        // O operador $[] é o "all positional operator" para encontrar a ideia certa
-        // e .$ é o "positional operator" para atualizar o array
-        var update = Builders<Topic>.Update.Push("ideas.$[idea].votes", vote);
-        
-        // 3. Opções para dizer ao MongoDB como encontrar a "idea"
-        var arrayFilters = new[]
+        var filter = Builders<Topic>.Filter.ElemMatch(t => t.Ideas, i => i.Id == ideaId);
+
+        var update = Builders<Topic>.Update.Push("ideas.$.votes", vote);
+
+        await _topics.UpdateOneAsync(filter, update);
+
+        // 3. Executar
+        var result = await _topics.UpdateOneAsync(filter, update);
+
+        if (result.MatchedCount == 0)
         {
-            new BsonDocumentArrayFilterDefinition<Idea>(
-                new BsonDocument("idea._id", vote.IdeaId))
-        };
-        
-        await _topics.UpdateOneAsync(ideaFilter, update, new UpdateOptions { ArrayFilters = arrayFilters });
+            throw new KeyNotFoundException($"Ideia com ID {ideaId} não encontrada em nenhum tópico.");
+        }
     }
 
-    public async Task DeleteAsync(Vote vote)
+    // --- MÉTODO CORRIGIDO ---
+    // Assinatura alterada para usar identificadores
+    public async Task DeleteAsync(int ideaId, string userEmail)
     {
-        // Semelhante a adicionar, mas usamos "Pull"
-        var ideaFilter = Builders<Topic>.Filter.ElemMatch(t => t.Ideas, i => i.Id == vote.IdeaId);
+        var filter = Builders<Topic>.Filter.ElemMatch(t => t.Ideas, i => i.Id == ideaId);
+
+        // CORRIGIDO: Voltando para camelCase
+        var update = Builders<Topic>.Update.PullFilter(
+            "ideas.$.votes", // O caminho para o array
+            Builders<Vote>.Filter.Eq(v => v.VotedBy, userEmail)
+        );
         
-        var update = Builders<Topic>.Update.Pull("ideas.$[idea].votes", vote);
+        await _topics.UpdateOneAsync(filter, update);
 
-        var arrayFilters = new[]
+        // 3. Executar
+        var result = await _topics.UpdateOneAsync(filter, update);
+
+        if (result.ModifiedCount == 0)
         {
-            new BsonDocumentArrayFilterDefinition<Idea>(
-                new BsonDocument("idea._id", vote.IdeaId))
-        };
-
-        await _topics.UpdateOneAsync(ideaFilter, update, new UpdateOptions { ArrayFilters = arrayFilters });
+            throw new KeyNotFoundException($"Voto do usuário {userEmail} na ideia {ideaId} não encontrado.");
+        }
     }
+    
+    // O método GetByIdAsync(int id) foi removido pois um Voto não tem
+    // um ID inteiro global. Ele é identificado pelo 'VotedBy' dentro de uma 'Idea'.
 }

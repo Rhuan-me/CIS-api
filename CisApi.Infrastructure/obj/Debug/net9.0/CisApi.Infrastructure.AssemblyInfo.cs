@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CisApi.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8c4acc483a9b8d2577d0685b7dfed982920bf426")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dad5d9676f9be4aa6569c361cc62fac95463a5a2")]
 [assembly: System.Reflection.AssemblyProductAttribute("CisApi.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CisApi.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
